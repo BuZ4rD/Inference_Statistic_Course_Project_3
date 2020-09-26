@@ -1,0 +1,185 @@
+---
+title: "Inference Statistics Course Project 3"
+author: "Mathias Barat"
+date: "25/09/2020"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+# PART 2
+
+## Overview
+
+Analyse the ToothGrowth dataset :
+
+The tooth growth data set is the length of the odontoblasts (teeth) in each of 10 guinea pigs at different Vitamin C dosage levels with two delivery methods.
+
+The procedure will consists in:
+  - Doing Exploratory Data Analyses
+  - Provide a summary
+  - Perform confidence interval
+  - State some conclusions.
+
+## Load the Dataset
+
+```{r}
+
+library(datasets)
+library(ggplot2)
+mydata <- ToothGrowth
+
+```
+
+## EDA
+
+### Structure of the dataset
+
+```{r}
+str(mydata)
+```
+The dataframe has 60 observations and 3 columns.
+
+  - len : Tooth length
+  - supp : Supplement Type 
+      -> "OJ" for orange Juice
+      -> "VC" for Ascorbic Acid (???)
+  - dose : 3 levels of Vitamin C dosage (0.5, 1, 2 mg)
+
+```{r}
+sum(is.na(mydata))
+```
+There is no NA in the dataset.
+```{r}
+summary(mydata$len)
+```
+### Plot
+
+A first blind graph to show roughly to have an idea of the content.
+
+```{r}
+qplot(data = mydata, y = len , facets = . ~ dose, )+
+        aes(color = supp, fill= supp) +
+        ggtitle ("Growth Tooth")+
+        labs(subtitle = "Exploratory Data analysis")+
+        xlab("Tooth Length")+
+        ylab("Length")
+```
+We can directly observed that when the doses of Vitamin C are increasing the teeth are increasing also.
+
+Let's summarize closely the dataset:
+
+### Summarize the Tooth Length by Dose and Supp
+
+```{r}
+library(dplyr)
+
+sum_tot <- mydata %>% 
+    group_by(supp,dose) %>%
+    summarize(mean_len_tooth=mean(len), sd_len_tooth=sd(len), count = n())
+print(sum_tot)
+
+```
+
+### Summarize the Tooth Length by Supp only
+
+```{r}
+library(dplyr)
+
+sum_supp <- mydata %>% 
+    group_by(supp) %>%
+    summarize(mean_len_tooth=mean(len), sd_len_tooth=sd(len), count = n())
+print(sum_supp)
+
+```
+
+### Summarize by Dosage level
+
+```{r}
+sum_dose <- mydata %>% 
+    group_by(dose) %>%
+    summarize(mean_len_tooth=mean(len), sd_len_tooth=sd(len), count = n())
+
+print(sum_dose)
+
+```
+
+Clearly, the teeth length means are greater when the doses of vitamin C increase.
+Same observation when we administrate the treatment with the Orange Juice.
+
+## Confidence Interval/Hypothesis
+
+Let's run t.test for the different configurations possible of the data:
+
+### Supplement Method Comparison
+
+##### At all dosage levels:
+```{r}
+
+t.test(len ~ supp, paired=FALSE, var.equal=FALSE, data=mydata)
+
+```
+##### At 0.5mg dosage level:
+```{r}
+
+t.test(len ~ supp, paired=FALSE, var.equal=FALSE, data=mydata[mydata$dose==0.5,])
+
+```
+##### At 1mg dosage level:
+```{r}
+
+t.test(len ~ supp, paired=FALSE, var.equal=FALSE, data=mydata[mydata$dose==1,])
+
+```
+##### At 2mg dosage level:
+```{r}
+
+t.test(len ~ supp, paired=FALSE, var.equal=FALSE, data=mydata[mydata$dose==2,])
+
+```
+
+We can find a significant difference between the 2 supplement methods for the 0.5 and 1mg dosage. No significant difference at 2mg.
+
+### Dosage Comparison
+
+So we will compare the different dosage with OJ:
+
+##### Compare 0.5 to 1 for OJ:
+```{r}
+
+t.test(len ~ dose, paired=FALSE, var.equal=FALSE, data=mydata[mydata$dose<2 & mydata$supp=="OJ",])
+
+```
+##### Compare 1 to 2 for OJ:
+```{r}
+
+t.test(len ~ dose, paired=FALSE, var.equal=FALSE, data=mydata[mydata$dose>0.5 & mydata$supp=="OJ",])
+
+
+```
+##### Compare 0.5 to 1 for VC:
+```{r}
+
+t.test(len ~ dose, paired=FALSE, var.equal=FALSE, data=mydata[mydata$dose<2 & mydata$supp=="VC",])
+
+```
+##### Compare 1 to 2 for VC:
+```{r}
+
+t.test(len ~ dose, paired=FALSE, var.equal=FALSE, data=mydata[mydata$dose>0.5 & mydata$supp=="OJ",])
+
+
+```
+For all the tests comparing the dosage, the confidence interval is always excluding 0. The differences between the dosage levels are significant.
+
+## Statements of the study
+
+### Conclusions
+
+  - The Vitamin C is correlated to the tooth growth with high confidence (95%) and this whatever the supplement method.
+  - The Orange Juice is providing better tooth growth at low dosage (=<1mg) than Ascorbic Acid. There is no significant difference at 2mg.
+  
+### Assumptions:
+  - The measurement are not paired
+  - The variances are not equal
+  - The test subjects were randomly selected and independants.
